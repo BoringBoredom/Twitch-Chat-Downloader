@@ -1,6 +1,6 @@
 import json, os, requests, time, argparse, webbrowser
 
-current_version = 0.11
+current_version = 0.12
 try:
     r = requests.get("https://api.github.com/repos/BoringBoredom/Twitch-Chat-Downloader/releases/latest")
     new_version = float(r.json()["tag_name"])
@@ -23,18 +23,9 @@ session.headers['Authorization'] = f"Bearer {data['access_token']}"
 
 def seconds_to_24h(time):
     hours = time // 3600
-    minutes = (time - hours * 3600) // 60
-    seconds = time - hours * 3600 - minutes * 60
-    hours = str(hours)
-    minutes = str(minutes)
-    seconds = str(seconds)
-    if len(hours) == 1:
-        hours = '0' + hours
-    if len(minutes) == 1:
-        minutes = '0' + minutes
-    if len(seconds) == 1:
-        seconds = '0' + seconds
-    return f"{hours}:{minutes}:{seconds}"
+    minutes = (time // 60) % 60
+    seconds = time % 60
+    return f"{hours:02}:{minutes:02}:{seconds:02}"
 
 def get_user_id(channel):
     response = session.get(f"https://api.twitch.tv/helix/users?login={channel}")
@@ -44,7 +35,7 @@ def get_user_id(channel):
     return user_id
 
 def get_video_data(user_id= None, video_count= None, video_id= None):
-    if user_id != None:
+    if user_id is not None:
         response = session.get(f"https://api.twitch.tv/helix/videos?user_id={user_id}&type=archive&first={video_count}")
     else:
         response = session.get(f"https://api.twitch.tv/helix/videos?id={video_id}")
@@ -81,24 +72,16 @@ def download_chat(video_data):
         file = open(f"{video_data[0][2]} {queue[0]} to {queue[-1]}.txt", "w", errors= 'ignore')
     for video in video_data:
         video_id = video[0]
-        response = session.get(f"https://api.twitch.tv/v5/videos/{video_id}/comments?content_offset_seconds=0")
-        time.sleep(0.08)
-        data = response.json()
-        timestamp = extract(file, data, video)
-        os.system('cls')
-        print(f"Queue:            {queue}\nFinished:         {finished}\n\nCurrent video:      {video[0]}   {round(timestamp / video[1] * 100)} %")
-        cursor = None
-        if '_next' in data:
-            cursor = data['_next']
+        cursor = 'content_offset_seconds=0'
         while cursor:
-            response = session.get(f"https://api.twitch.tv/v5/videos/{video_id}/comments?cursor={cursor}")
+            response = session.get(f"https://api.twitch.tv/v5/videos/{video_id}/comments?{cursor}")
             time.sleep(0.08)
             data = response.json()
             timestamp = extract(file, data, video)
             os.system('cls')
             print(f"Queue:            {queue}\nFinished:         {finished}\n\nCurrent video:      {video[0]}   {round(timestamp / video[1] * 100)} %")
             if '_next' in data:
-                cursor = data['_next']
+                cursor = f"cursor={data['_next']}"
             else:
                 cursor = None
                 file.write("\n\n")
