@@ -1,6 +1,6 @@
-import json, os, requests, time, argparse, webbrowser
+import json, os, requests, time, argparse, webbrowser, re
 
-current_version = 0.12
+current_version = 0.13
 try:
     r = requests.get("https://api.github.com/repos/BoringBoredom/Twitch-Chat-Downloader/releases/latest")
     new_version = float(r.json()["tag_name"])
@@ -43,11 +43,20 @@ def get_video_data(user_id= None, video_count= None, video_id= None):
     data = response.json()
     video_data = []
     for video in data['data']:
-        split = video['duration'].split('h')
-        hours = split[0]
-        split = split[1].split('m')
-        minutes = split[0]
-        seconds = split[1].split('s')[0]
+        duration_list = []
+        matches = re.finditer(r"(\d+)", video['duration'])
+        for matchNum, match in enumerate(matches, start=1):
+            for groupNum in range(0, len(match.groups())):
+                groupNum = groupNum + 1
+                duration_list.append(match.group(groupNum))
+        duration_list.reverse()
+        seconds, minutes, hours = 0, 0, 0
+        try:
+            seconds = duration_list[0]
+            minutes = duration_list[1]
+            hours = duration_list[2]
+        except IndexError:
+            pass
         duration = int(seconds) + int(minutes) * 60 + int(hours) * 3600
         user_name = video['user_name']
         video_data.append([video['id'], duration, user_name])
