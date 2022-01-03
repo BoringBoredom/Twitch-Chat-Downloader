@@ -1,0 +1,15 @@
+{
+  "name": "twitch-chat-downloader",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "BoringBoredom",
+  "license": "ISC",
+  "dependencies": {
+    "argparse": "^2.0.1",
+    "axios": "^0.24.0"
+  }
+}
